@@ -99,7 +99,7 @@ void matrix_scan_user(void) {
     }
 }
 
-bool led_update_kb(led_t led_state) {
+bool led_update_user(led_t led_state) {
     static led_t prev_state = { .raw = 0 };
     if(prev_state.caps_lock != led_state.caps_lock) {
         if(led_state.caps_lock) {
