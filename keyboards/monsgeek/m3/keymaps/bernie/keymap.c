@@ -80,70 +80,58 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 #define CAPS_LOCK_LED_INDEX 50
 #define SCRLK_LED_INDEX 14
+#define GUI_LEFT 77
+#define GUI_RIGHT 81
+#define INDICATOR_HSV 255, 0, 0
+#define INDICATOR_OFF 0, 0, 0
 
-bool process_record_user(uint16_t keycode, keyrecord_t* record) {
-    if (record->event.pressed) {
-        switch(keycode) {
-            case RGB_TOG:
-                switch(rgb_matrix_get_flags()) {
-                    case LED_FLAG_ALL:
-                        rgb_matrix_set_flags_noeeprom(LED_FLAG_NONE);
-                        rgb_matrix_set_color_all(0, 0, 0);
-                        break;
-                    default:
-                        rgb_matrix_set_flags_noeeprom(LED_FLAG_ALL);
-                        break;
-                }
-                if (!rgb_matrix_is_enabled()) {
-                    rgb_matrix_set_flags(LED_FLAG_ALL);
-                    rgb_matrix_enable();
-                }
-                break;
-            case RGB_MODE_FORWARD:
-                rgb_matrix_step_noeeprom();
-                break;
-            case RGB_MODE_REVERSE:
-                rgb_matrix_step_reverse_noeeprom();
-                break;
-            case RGB_HUI:
-                rgb_matrix_increase_hue_noeeprom();
-                break;
-            case RGB_HUD:
-                rgb_matrix_decrease_hue_noeeprom();
-                break;
-            case RGB_SAI:
-                rgb_matrix_increase_sat_noeeprom();
-                break;
-            case RGB_SAD:
-                rgb_matrix_decrease_sat_noeeprom();
-                break;
-            case RGB_VAI:
-                rgb_matrix_increase_val_noeeprom();
-                break;
-            case RGB_VAD:
-                rgb_matrix_decrease_val_noeeprom();
-                break;
-            case RGB_SPI:
-                rgb_matrix_increase_speed_noeeprom();
-                break;
-            case RGB_SPD:
-                rgb_matrix_decrease_speed_noeeprom();
-                break;
-            default:
-                return true;
+void matrix_scan_user(void) {
+    static bool prev_no_gui_status = false;
+    if(keymap_config.no_gui != prev_no_gui_status) {
+        if(keymap_config.no_gui) {
+            rgb_matrix_set_color(GUI_LEFT, INDICATOR_HSV);
+            rgb_matrix_set_color(GUI_RIGHT, INDICATOR_HSV);
+        } else {
+            rgb_matrix_set_color(GUI_LEFT, INDICATOR_OFF);
+            rgb_matrix_set_color(GUI_RIGHT, INDICATOR_OFF);
         }
-    } else {
-        return true;
+        prev_no_gui_status = keymap_config.no_gui;
     }
-    return false;
+}
+
+bool led_update_kb(led_t led_state) {
+    static led_t prev_state = { .raw = 0 };
+    if(prev_state.caps_lock != led_state.caps_lock) {
+        if(led_state.caps_lock) {
+            rgb_matrix_set_color(CAPS_LOCK_LED_INDEX, INDICATOR_HSV);
+        } else {
+            rgb_matrix_set_color(CAPS_LOCK_LED_INDEX, INDICATOR_OFF);
+        }
+    }
+    if(prev_state.scroll_lock != led_state.scroll_lock) {
+        if(led_state.scroll_lock) {
+            rgb_matrix_set_color(SCRLK_LED_INDEX, INDICATOR_HSV);
+        } else {
+            rgb_matrix_set_color(SCRLK_LED_INDEX, INDICATOR_OFF);
+        }
+    }
+    prev_state = led_state;
+    return true;
 }
 
 bool rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
-    if(led_min <= CAPS_LOCK_LED_INDEX && CAPS_LOCK_LED_INDEX < led_max && host_keyboard_led_state().caps_lock) {
-        rgb_matrix_set_color(CAPS_LOCK_LED_INDEX, 255, 0, 0);
+    led_t led_state = host_keyboard_led_state();
+    if(led_min <= CAPS_LOCK_LED_INDEX && CAPS_LOCK_LED_INDEX < led_max && led_state.caps_lock) {
+        rgb_matrix_set_color(CAPS_LOCK_LED_INDEX, INDICATOR_HSV);
     }
-    if(led_min <= SCRLK_LED_INDEX && SCRLK_LED_INDEX < led_max && host_keyboard_led_state().scroll_lock) {
-        rgb_matrix_set_color(SCRLK_LED_INDEX, 255, 0, 0);
+    if(led_min <= SCRLK_LED_INDEX && SCRLK_LED_INDEX < led_max && led_state.scroll_lock) {
+        rgb_matrix_set_color(SCRLK_LED_INDEX, INDICATOR_HSV);
+    }
+    if(led_min <= GUI_LEFT && GUI_LEFT < led_max && keymap_config.no_gui) {
+        rgb_matrix_set_color(GUI_LEFT, INDICATOR_HSV);
+    }
+    if(led_min <= GUI_RIGHT && GUI_RIGHT < led_max && keymap_config.no_gui) {
+        rgb_matrix_set_color(GUI_RIGHT, INDICATOR_HSV);
     }
     return false;
 }
