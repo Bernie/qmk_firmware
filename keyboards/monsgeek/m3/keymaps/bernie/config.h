@@ -3,4 +3,6 @@
 #define RGB_MATRIX_DEFAULT_HUE 160
 #define RGB_MATRIX_DEFAULT_SAT 200
 #define RGB_MATRIX_DEFAULT_VAL 160
+// Adjust debounce settings
+#define DEBOUNCE 10
 
